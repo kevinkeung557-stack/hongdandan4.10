@@ -6,67 +6,77 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>企业微信</title>
-    
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
             background-color: #000;
             overflow: hidden;
             height: 100vh;
             width: 100vw;
-            /* 尝试解决色彩渲染偏差 */
             image-rendering: -webkit-optimize-contrast;
             color-profile: sRGB;
         }
 
-        /* 公共图片样式：强制铺满，不留缝隙 */
-        .full-screen-bg {
+        /* 公共图片容器样式：强制铺满 */
+        .app-layer {
             position: fixed;
+            top: 0;
             left: 0;
             width: 100vw;
-            height: 100vh; /* 强制高度为屏幕高度 */
-            background-size: 100% 100%; /* 关键：强制拉伸铺满，解决覆盖不全 */
+            height: 100vh;
+            background-size: 100% 100%;
             background-repeat: no-repeat;
             background-position: center;
         }
 
-        /* 侧边栏层 */
+        /* 层级 1：底层侧边栏 */
         .sidebar-bg {
             background-image: url('sidebar.png');
-            z-index: 1;
+            z-index: 10; /* 提高基础层级 */
         }
 
-        /* 首页层 */
+        /* 【关键修改】透明触发器 A：放在侧边栏顶部，头像和名字区域（打开个人资料页） */
+        .sidebar-profile-trigger {
+            position: absolute;
+            top: 40px;    /* 适配截图中的头像位置 */
+            left: 0;
+            width: 300px; /* 覆盖头像和名字的长方形区域 */
+            height: 120px;
+            z-index: 20;  /* 确保在侧边栏最顶层 */
+            /* background: rgba(0, 255, 0, 0.3); */ /* 调试用，看看位置对不对 */
+        }
+
+        /* 层级 2：首页主容器 */
         .main-container {
             background-image: url('home.png');
-            z-index: 2;
+            z-index: 30; /* 必须比侧边栏高 */
             transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1), border-radius 0.4s;
             box-shadow: -10px 0 30px rgba(0,0,0,0.5);
             
-            /* 【核心保留】强制把首页图片向上拉，藏住黑边 */
+            /* 【核心保留】你的旧布局偏移量 */
             transform: translateY(-5px); 
         }
 
-        /* 侧边栏打开时的复合动画（水平推移 + 保持垂直位移 + 缩放 + 圆角） */
+        /* 状态：侧边栏打开 */
         .main-container.open {
-            /* 85vw 是向右推移距离，-5px 是保持上面的垂直位移，0.94 是缩放比例 */
             transform: translateX(85vw) translateY(-5px) scale(0.94);
             border-radius: 12px;
         }
 
-        /* 透明触发热区（加大加高，方便点击） */
+        /* 透明触发器 B：左上角三横线（打开侧边栏） */
         .menu-trigger {
             position: absolute;
             top: 0;
             left: 0;
-            width: 80px;
-            height: 120px;
-            z-index: 10;
+            width: 70px;
+            height: 100px;
+            z-index: 40; /* 确保在首页最顶层 */
         }
 
+        /* 首页上的透明遮罩（侧边栏打开时，点击首页空白处关闭） */
         .close-overlay {
             position: absolute;
             top: 0;
@@ -74,30 +84,75 @@
             width: 100%;
             height: 100%;
             display: none;
-            z-index: 11;
+            z-index: 41;
         }
         .main-container.open .close-overlay {
             display: block;
+        }
+
+        /* ========================================= */
+        /* 层级 3：个人资料页 (Page 3) */
+        /* ========================================= */
+        .profile-layer {
+            background-image: url('profile.png');
+            z-index: 100; /* 最高层级，盖住一切 */
+            transform: translateX(100%); /* 初始状态在屏幕右侧隐藏 */
+            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.3);
+        }
+
+        /* 状态：个人资料页打开 */
+        .profile-layer.show {
+            transform: translateX(0); /* 滑入屏幕 */
+        }
+
+        /* 透明触发器 C：个人资料页左上角“返回箭头”（关闭个人资料页） */
+        .profile-back-trigger {
+            position: absolute;
+            top: 40px; /* 跳过刘海屏 */
+            left: 0;
+            width: 80px;
+            height: 60px;
+            z-index: 110;
         }
 
     </style>
 </head>
 <body>
 
-    <div class="sidebar-bg full-screen-bg"></div>
+    <div class="sidebar-bg app-layer">
+        <div class="sidebar-profile-trigger" onclick="showProfile(event)"></div>
+    </div>
 
-    <div class="main-container full-screen-bg" id="app">
+    <div class="main-container app-layer" id="app">
         <div class="menu-trigger" onclick="toggleMenu(event)"></div>
         <div class="close-overlay" onclick="toggleMenu(event)"></div>
     </div>
 
+    <div class="profile-layer app-layer" id="profilePage">
+        <div class="profile-back-trigger" onclick="hideProfile(event)"></div>
+    </div>
+
     <script>
+        // 侧边栏交互逻辑
         function toggleMenu(e) {
             e.stopPropagation();
-            const app = document.getElementById('app');
-            app.classList.toggle('open');
+            document.getElementById('app').classList.toggle('open');
         }
 
+        // 打开个人资料页逻辑
+        function showProfile(e) {
+            e.stopPropagation();
+            document.getElementById('profilePage').classList.add('show');
+        }
+
+        // 关闭个人资料页逻辑
+        function hideProfile(e) {
+            e.stopPropagation();
+            document.getElementById('profilePage').classList.remove('show');
+        }
+
+        // 彻底阻止弹性滚动穿帮
         document.addEventListener('touchmove', function(e) {
             e.preventDefault();
         }, { passive: false });
