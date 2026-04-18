@@ -255,12 +255,16 @@
 
         // ── 个人中心 ──
         let profAnimating = false;
+        let profBaseX = 0; // 基准 translateX（0 或 100%）
+
         function showP() {
             if (profAnimating) return;
             profAnimating = true;
             p.classList.remove('slide-out');
             p.classList.add('slide-in');
             p.classList.add('show');
+            p.scrollTop = 0;
+            profBaseX = 0;
             setTimeout(() => { p.classList.remove('slide-in'); profAnimating = false; }, 400);
         }
         function hidP() {
@@ -268,9 +272,10 @@
             profAnimating = true;
             p.classList.remove('slide-in');
             p.classList.add('slide-out');
+            profBaseX = 100;
             setTimeout(() => {
                 p.classList.remove('show', 'slide-out');
-                p.style.transform = 'translateX(100%)';
+                p.style.transform = `translateX(${profBaseX}%)`;
                 profAnimating = false;
             }, 400);
         }
@@ -286,11 +291,13 @@
 
         // ── 手势：右滑返回、橡皮筋 ──
         let sX = 0, sY = 0, cX = 0, cY = 0;
-        const resistance = 0.06;
+        let lastTouchY = 0, velocityY = 0;
 
         p.addEventListener('touchstart', e => {
             sX = e.touches[0].clientX;
             sY = e.touches[0].clientY;
+            lastTouchY = e.touches[0].clientY;
+            velocityY = 0;
             p.style.transition = 'none';
             cX = 0; cY = 0;
         }, { passive: true });
@@ -298,20 +305,22 @@
         p.addEventListener('touchmove', e => {
             const moveX = e.touches[0].clientX - sX;
             const moveY = e.touches[0].clientY - sY;
+            velocityY = e.touches[0].clientY - lastTouchY;
+            lastTouchY = e.touches[0].clientY;
 
             if (moveX > 0 && Math.abs(moveX) > Math.abs(moveY)) {
                 // 右滑返回，带惯性阻尼
-                cX = moveX * 0.6;
-                p.style.transform = `translateX(${cX}px)`;
+                cX = Math.max(0, moveX * 0.6);
+                p.style.transform = `translateX(${cX}px) translateY(${cY}px)`;
             } else if (p.scrollTop <= 0 && moveY > 0) {
-                // 顶部下拉橡皮筋，阻力更大更真实
+                // 顶部下拉橡皮筋
                 cY = Math.pow(moveY, 0.85);
-                p.style.transform = `translateY(${cY}px)`;
+                p.style.transform = `translateX(${cX}px) translateY(${cY}px)`;
                 e.preventDefault();
             } else if (p.scrollTop + p.offsetHeight >= p.scrollHeight && moveY < 0) {
                 // 底部上拉橡皮筋
                 cY = -Math.pow(-moveY, 0.85);
-                p.style.transform = `translateY(${cY}px)`;
+                p.style.transform = `translateX(${cX}px) translateY(${cY}px)`;
                 e.preventDefault();
             }
         }, { passive: false });
@@ -330,17 +339,6 @@
         document.addEventListener('touchmove', e => {
             if (!p.contains(e.target)) e.preventDefault();
         }, { passive: false });
-
-        // ── 惯性滚动：用 momentum 模拟 ──
-        let lastTouchY = 0, velocityY = 0;
-        p.addEventListener('touchstart', e => {
-            lastTouchY = e.touches[0].clientY;
-            velocityY = 0;
-        }, { passive: true });
-        p.addEventListener('touchmove', e => {
-            velocityY = e.touches[0].clientY - lastTouchY;
-            lastTouchY = e.touches[0].clientY;
-        }, { passive: true });
 
         // 给 tab-btn 加上 margin-bottom 适配安全区
         document.querySelector('.tabs').style.marginBottom = 'env(safe-area-inset-bottom)';
