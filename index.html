@@ -8,153 +8,140 @@
     <title>企业微信</title>
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
+    <link rel="preload" href="home.png" as="image">
+    <link rel="preload" href="youjian.png" as="image">
+    <link rel="preload" href="wendang.png" as="image">
+    <link rel="preload" href="gongzuotai.png" as="image">
+    <link rel="preload" href="tongxunlu.png" as="image">
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: #000; overflow: hidden; height: 100vh; width: 100vw; }
         
-        body {
-            background-color: #000;
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-            image-rendering: -webkit-optimize-contrast;
-            color-profile: sRGB;
-        }
-
-        /* 公共图片容器样式：强制铺满 */
-        .app-layer {
+        .page {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
             background-size: 100% 100%;
             background-repeat: no-repeat;
-            background-position: center;
         }
 
-        /* 层级 1：底层侧边栏 */
-        .sidebar-bg {
-            background-image: url('sidebar.png');
-            z-index: 10; /* 提高基础层级 */
-        }
+        #side { background-image: url('sidebar.png'); z-index: 1; }
+        .to-prof { position: absolute; top: 40px; left: 0; width: 260px; height: 120px; z-index: 15; }
 
-        /* 【关键修改】透明触发器 A：放在侧边栏顶部，头像和名字区域（打开个人资料页） */
-        .sidebar-profile-trigger {
-            position: absolute;
-            top: 40px;    /* 适配截图中的头像位置 */
-            left: 0;
-            width: 300px; /* 覆盖头像和名字的长方形区域 */
-            height: 120px;
-            z-index: 20;  /* 确保在侧边栏最顶层 */
-            /* background: rgba(0, 255, 0, 0.3); */ /* 调试用，看看位置对不对 */
-        }
-
-        /* 层级 2：首页主容器 */
-        .main-container {
+        #home {
             background-image: url('home.png');
-            z-index: 30; /* 必须比侧边栏高 */
-            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1), border-radius 0.4s;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
-            
-            /* 【核心保留】你的旧布局偏移量 */
-            transform: translateY(-5px); 
-        }
-
-        /* 状态：侧边栏打开 */
-        .main-container.open {
-            transform: translateX(85vw) translateY(-5px) scale(0.94);
-            border-radius: 12px;
-        }
-
-        /* 透明触发器 B：左上角三横线（打开侧边栏） */
-        .menu-trigger {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 70px;
-            height: 100px;
-            z-index: 40; /* 确保在首页最顶层 */
-        }
-
-        /* 首页上的透明遮罩（侧边栏打开时，点击首页空白处关闭） */
-        .close-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            z-index: 41;
-        }
-        .main-container.open .close-overlay {
-            display: block;
-        }
-
-        /* ========================================= */
-        /* 层级 3：个人资料页 (Page 3) */
-        /* ========================================= */
-        .profile-layer {
-            background-image: url('profile.png');
-            z-index: 100; /* 最高层级，盖住一切 */
-            transform: translateX(100%); /* 初始状态在屏幕右侧隐藏 */
+            z-index: 10;
             transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-            box-shadow: -10px 0 30px rgba(0,0,0,0.3);
+            transform: translateY(-5px);
+            background-color: #fff;
         }
+        #home.open { transform: translateX(85vw) translateY(-5px) scale(0.94); border-radius: 12px; box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
+        .menu-btn { position: absolute; top: 0; left: 0; width: 70px; height: 100px; z-index: 15; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 20; }
+        #home.open .overlay { display: block; }
+        .tabs { position: absolute; bottom: 0; left: 0; width: 100%; height: 84px; display: flex; z-index: 25; }
+        .tab-btn { flex: 1; height: 100%; }
 
-        /* 状态：个人资料页打开 */
-        .profile-layer.show {
-            transform: translateX(0); /* 滑入屏幕 */
+        #prof {
+            background-color: #f5f5f5;
+            z-index: 100;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
         }
-
-        /* 透明触发器 C：个人资料页左上角“返回箭头”（关闭个人资料页） */
-        .profile-back-trigger {
-            position: absolute;
-            top: 40px; /* 跳过刘海屏 */
-            left: 0;
-            width: 80px;
-            height: 60px;
-            z-index: 110;
+        #prof.show { transform: translateX(0); }
+        
+        .prof-bg {
+            width: 100%;
+            height: 150vh; 
+            background-image: url('profile.png');
+            background-size: 100% auto;
+            background-repeat: no-repeat;
         }
-
+        .back-btn { position: fixed; top: 40px; left: 0; width: 80px; height: 60px; z-index: 110; }
     </style>
 </head>
 <body>
 
-    <div class="sidebar-bg app-layer">
-        <div class="sidebar-profile-trigger" onclick="showProfile(event)"></div>
+    <div id="side" class="page">
+        <div class="to-prof" onclick="showP()"></div>
     </div>
 
-    <div class="main-container app-layer" id="app">
-        <div class="menu-trigger" onclick="toggleMenu(event)"></div>
-        <div class="close-overlay" onclick="toggleMenu(event)"></div>
+    <div id="home" class="page">
+        <div class="menu-btn" onclick="togM()"></div>
+        <div class="overlay" onclick="togM()"></div>
+        <div class="tabs">
+            <div class="tab-btn" onclick="swT('home.png')"></div>
+            <div class="tab-btn" onclick="swT('youjian.png')"></div>
+            <div class="tab-btn" onclick="swT('wendang.png')"></div>
+            <div class="tab-btn" onclick="swT('gongzuotai.png')"></div>
+            <div class="tab-btn" onclick="swT('tongxunlu.png')"></div>
+        </div>
     </div>
 
-    <div class="profile-layer app-layer" id="profilePage">
-        <div class="profile-back-trigger" onclick="hideProfile(event)"></div>
+    <div id="prof" class="page">
+        <div class="back-btn" onclick="hidP()"></div>
+        <div class="prof-bg"></div>
     </div>
 
     <script>
-        // 侧边栏交互逻辑
-        function toggleMenu(e) {
-            e.stopPropagation();
-            document.getElementById('app').classList.toggle('open');
-        }
+        const h = document.getElementById('home');
+        const p = document.getElementById('prof');
 
-        // 打开个人资料页逻辑
-        function showProfile(e) {
-            e.stopPropagation();
-            document.getElementById('profilePage').classList.add('show');
-        }
+        function togM() { h.classList.toggle('open'); }
+        function showP() { p.classList.add('show'); p.style.transform = 'translateX(0)'; }
+        function hidP() { p.classList.remove('show'); p.style.transform = 'translateX(100%)'; setTimeout(() => { p.scrollTop = 0; }, 400); }
+        function swT(img) { h.style.backgroundImage = `url('${img}')`; }
 
-        // 关闭个人资料页逻辑
-        function hideProfile(e) {
-            e.stopPropagation();
-            document.getElementById('profilePage').classList.remove('show');
-        }
+        let sX = 0, sY = 0;
+        let cX = 0, cY = 0;
+        const resistance = 0.08; 
 
-        // 彻底阻止弹性滚动穿帮
-        document.addEventListener('touchmove', function(e) {
-            e.preventDefault();
+        p.addEventListener('touchstart', (e) => {
+            sX = e.touches[0].clientX;
+            sY = e.touches[0].clientY;
+            p.style.transition = 'none';
+        });
+
+        p.addEventListener('touchmove', (e) => {
+            const moveX = e.touches[0].clientX - sX;
+            const moveY = e.touches[0].clientY - sY;
+
+            // 1. 左右滑动手势（返回）
+            if (moveX > 0 && Math.abs(moveX) > Math.abs(moveY)) {
+                cX = moveX;
+                p.style.transform = `translateX(${cX}px)`;
+            } 
+            // 2. 顶部下拉橡皮筋
+            else if (p.scrollTop <= 0 && moveY > 0) {
+                cY = moveY * resistance;
+                p.style.transform = `translateY(${cY}px)`;
+                e.preventDefault();
+            }
+            // 3. 【新增】底部上拉橡皮筋
+            // 判定条件：滚动到底部且手指继续上滑
+            else if (p.scrollTop + p.offsetHeight >= p.scrollHeight && moveY < 0) {
+                cY = moveY * resistance;
+                p.style.transform = `translateY(${cY}px)`;
+                e.preventDefault();
+            }
+        });
+
+        p.addEventListener('touchend', () => {
+            p.style.transition = 'transform 0.4s cubic-bezier(0.19, 1, 0.22, 1)';
+            if (cX > 120) {
+                hidP();
+            } else {
+                // 自动回弹归位
+                p.style.transform = 'translateX(0) translateY(0)';
+            }
+            cX = 0; cY = 0;
+        });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!p.contains(e.target)) e.preventDefault();
         }, { passive: false });
     </script>
 </body>
