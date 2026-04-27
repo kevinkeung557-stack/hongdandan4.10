@@ -16,8 +16,8 @@
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background: #000; overflow: hidden; height: 100vh; width: 100vw; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
-
+        body { background: #000; overflow: hidden; height: 100vh; width: 100vw; }
+        
         .page {
             position: fixed;
             top: 0; left: 0;
@@ -27,321 +27,122 @@
         }
 
         #side { background-image: url('sidebar.png'); z-index: 1; }
-        .to-prof {
-            position: absolute; top: 40px; left: 0; width: 260px; height: 120px; z-index: 15;
-            transition: opacity 0.15s;
-        }
-        .to-prof:active { opacity: 0.6; }
+        .to-prof { position: absolute; top: 40px; left: 0; width: 260px; height: 120px; z-index: 5; }
 
         #home {
             background-image: url('home.png');
             z-index: 10;
-            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), border-radius 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
             transform: translateY(-5px);
             background-color: #fff;
         }
-        #home.open {
-            transform: translateX(82vw) translateY(-5px) scale(0.93);
-            border-radius: 12px;
-            box-shadow: -12px 0 40px rgba(0,0,0,0.4);
-        }
+        #home.open { transform: translateX(85vw) translateY(-5px) scale(0.94); border-radius: 12px; box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
         .menu-btn { position: absolute; top: 0; left: 0; width: 70px; height: 100px; z-index: 15; }
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 20; }
         #home.open .overlay { display: block; }
+        .tabs { position: absolute; bottom: 0; left: 0; width: 100%; height: 84px; display: flex; z-index: 25; }
+        .tab-btn { flex: 1; height: 100%; }
 
-        /* ── 底部标签栏 ── */
-        .tabs {
-            position: absolute;
-            bottom: 0; left: 0;
-            width: 100%;
-            /* 底部安全区适配 */
-            padding-bottom: env(safe-area-inset-bottom);
-            height: calc(84px + env(safe-area-inset-bottom));
-            display: flex;
-            z-index: 25;
-            background: #fff;
-            border-top: 0.5px solid #e0e0e0;
-        }
-        .tab-btn {
-            flex: 1; height: 100%;
-            position: relative;
-            display: flex; align-items: center; justify-content: center;
-            overflow: hidden;
-            cursor: pointer;
-            -webkit-tap-highlight-color: rgba(0,0,0,0);
-        }
-        .tab-btn::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.06);
-            opacity: 0;
-            transition: opacity 0.15s;
-        }
-        .tab-btn:active::after { opacity: 1; }
-        .tab-btn.active::after { opacity: 1; background: rgba(0,0,0,0.04); }
-        .tab-btn.active {
-            animation: tabPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        @keyframes tabPop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.08); }
-            100% { transform: scale(1); }
-        }
-
-        /* ── 个人中心 ── */
         #prof {
             background-color: #f5f5f5;
             z-index: 100;
             transform: translateX(100%);
-            /* 更细腻的 iOS 页面切换曲线 */
-            transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
             overflow-y: scroll;
             -webkit-overflow-scrolling: touch;
-            /* 底部安全区 */
-            padding-bottom: env(safe-area-inset-bottom);
         }
         #prof.show { transform: translateX(0); }
-
-        /* 头像 + 信息卡 */
-        .prof-header {
-            position: relative;
-            width: 100%;
-            background: #fff;
-            padding: 20px 20px 30px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            border-bottom: 0.5px solid #e8e8e8;
-        }
-        .prof-avatar {
-            width: 64px; height: 64px;
-            border-radius: 8px;
-            background: #ddd;
-            background-image: url('profile.png');
-            background-size: cover;
-            background-position: center;
-            flex-shrink: 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-        }
-        .prof-info { flex: 1; }
-        .prof-name {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-bottom: 4px;
-        }
-        .prof-company {
-            font-size: 13px;
-            color: #888;
-        }
-        .prof-qr {
-            width: 36px; height: 36px;
-            background: #f5f5f5;
-            border-radius: 6px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px;
-            color: #888;
-            border: 0.5px solid #e0e0e0;
-        }
-
-        .back-btn {
-            position: fixed;
-            top: max(40px, env(safe-area-inset-top));
-            left: 0; width: 80px; height: 60px;
-            z-index: 110;
-        }
-        .back-btn:active { opacity: 0.6; }
-
+        
         .prof-bg {
             width: 100%;
-            height: 150vh;
+            height: 150vh; 
             background-image: url('profile.png');
             background-size: 100% auto;
             background-repeat: no-repeat;
         }
-
-        /* 页面进入/退出动画关键帧 */
-        @keyframes slideInRight {
-            from { transform: translateX(100%); }
-            to { transform: translateX(0); }
-        }
-        @keyframes slideOutRight {
-            from { transform: translateX(0); }
-            to { transform: translateX(100%); }
-        }
-        #prof.slide-in { animation: slideInRight 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
-        #prof.slide-out { animation: slideOutRight 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
-
-        /* 触摸 ripple 效果（给按钮用） */
-        .ripple {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.4);
-            transform: scale(0);
-            animation: rippleAnim 0.5s ease-out forwards;
-            pointer-events: none;
-        }
-        @keyframes rippleAnim {
-            to { transform: scale(2.5); opacity: 0; }
-        }
+        .back-btn { position: fixed; top: 40px; left: 0; width: 80px; height: 60px; z-index: 110; }
     </style>
 </head>
 <body>
 
     <div id="side" class="page">
-        <div class="to-prof ripple-target" onclick="showP()"></div>
+        <div class="to-prof" onclick="showP()"></div>
     </div>
 
     <div id="home" class="page">
-        <div class="menu-btn ripple-target" onclick="togM()"></div>
-        <div class="overlay ripple-target" onclick="togM()"></div>
+        <div class="menu-btn" onclick="togM()"></div>
+        <div class="overlay" onclick="togM()"></div>
         <div class="tabs">
-            <div class="tab-btn ripple-target active" onclick="swT('home.png', 0)"></div>
-            <div class="tab-btn ripple-target" onclick="swT('youjian.png', 1)"></div>
-            <div class="tab-btn ripple-target" onclick="swT('wendang.png', 2)"></div>
-            <div class="tab-btn ripple-target" onclick="swT('gongzuotai.png', 3)"></div>
-            <div class="tab-btn ripple-target" onclick="swT('tongxunlu.png', 4)"></div>
+            <div class="tab-btn" onclick="swT('home.png')"></div>
+            <div class="tab-btn" onclick="swT('youjian.png')"></div>
+            <div class="tab-btn" onclick="swT('wendang.png')"></div>
+            <div class="tab-btn" onclick="swT('gongzuotai.png')"></div>
+            <div class="tab-btn" onclick="swT('tongxunlu.png')"></div>
         </div>
     </div>
 
     <div id="prof" class="page">
-        <div class="back-btn ripple-target" onclick="hidP()"></div>
-        <div class="prof-header">
-            <div class="prof-avatar"></div>
-            <div class="prof-info">
-                <div class="prof-name">江涌升</div>
-                <div class="prof-company">MiniMax · 产品研发</div>
-            </div>
-            <div class="prof-qr">码</div>
-        </div>
+        <div class="back-btn" onclick="hidP()"></div>
         <div class="prof-bg"></div>
     </div>
 
     <script>
         const h = document.getElementById('home');
         const p = document.getElementById('prof');
-        let currentTab = 0;
 
-        // ── Ripple 效果 ──
-        function addRipple(e, el) {
-            const ripple = document.createElement('span');
-            ripple.className = 'ripple';
-            const rect = el.getBoundingClientRect();
-            const size = Math.max(rect.width, rect.height);
-            ripple.style.width = ripple.style.height = size + 'px';
-            ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
-            ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
-            el.style.position = 'relative';
-            el.style.overflow = 'hidden';
-            el.appendChild(ripple);
-            setTimeout(() => ripple.remove(), 500);
-        }
-
-        document.querySelectorAll('.ripple-target').forEach(el => {
-            el.addEventListener('touchstart', e => {
-                const target = e.target;
-                if (target.classList.contains('tab-btn')) {
-                    // tab-btn 用 JavaScript 动画，延迟加 ripple
-                    setTimeout(() => addRipple(e.touches[0], target), 80);
-                } else {
-                    addRipple(e.touches[0], target);
-                }
-            }, { passive: true });
-        });
-
-        // ── 菜单 ──
         function togM() { h.classList.toggle('open'); }
+        function showP() { p.classList.add('show'); p.style.transform = 'translateX(0)'; }
+        function hidP() { p.classList.remove('show'); p.style.transform = 'translateX(100%)'; setTimeout(() => { p.scrollTop = 0; }, 400); }
+        function swT(img) { h.style.backgroundImage = `url('${img}')`; }
 
-        // ── 个人中心 ──
-        let profAnimating = false;
-        let profBaseX = 0; // 基准 translateX（0 或 100%）
+        let sX = 0, sY = 0;
+        let cX = 0, cY = 0;
+        const resistance = 0.08; 
 
-        function showP() {
-            if (profAnimating) return;
-            profAnimating = true;
-            p.classList.remove('slide-out');
-            p.classList.add('slide-in');
-            p.classList.add('show');
-            p.scrollTop = 0;
-            profBaseX = 0;
-            setTimeout(() => { p.classList.remove('slide-in'); profAnimating = false; }, 400);
-        }
-        function hidP() {
-            if (profAnimating) return;
-            profAnimating = true;
-            p.classList.remove('slide-in');
-            p.classList.add('slide-out');
-            profBaseX = 100;
-            setTimeout(() => {
-                p.classList.remove('show', 'slide-out');
-                p.style.transform = `translateX(${profBaseX}%)`;
-                profAnimating = false;
-            }, 400);
-        }
-
-        // ── 标签切换 + active 状态 ──
-        function swT(img, idx) {
-            h.style.backgroundImage = `url('${img}')`;
-            document.querySelectorAll('.tab-btn').forEach((btn, i) => {
-                btn.classList.toggle('active', i === idx);
-            });
-            currentTab = idx;
-        }
-
-        // ── 手势：右滑返回、橡皮筋 ──
-        let sX = 0, sY = 0, cX = 0, cY = 0;
-        let lastTouchY = 0, velocityY = 0;
-
-        p.addEventListener('touchstart', e => {
+        p.addEventListener('touchstart', (e) => {
             sX = e.touches[0].clientX;
             sY = e.touches[0].clientY;
-            lastTouchY = e.touches[0].clientY;
-            velocityY = 0;
             p.style.transition = 'none';
-            cX = 0; cY = 0;
-        }, { passive: true });
+        });
 
-        p.addEventListener('touchmove', e => {
+        p.addEventListener('touchmove', (e) => {
             const moveX = e.touches[0].clientX - sX;
             const moveY = e.touches[0].clientY - sY;
-            velocityY = e.touches[0].clientY - lastTouchY;
-            lastTouchY = e.touches[0].clientY;
 
+            // 1. 左右滑动手势（返回）
             if (moveX > 0 && Math.abs(moveX) > Math.abs(moveY)) {
-                // 右滑返回，带惯性阻尼
-                cX = Math.max(0, moveX * 0.6);
-                p.style.transform = `translateX(${cX}px) translateY(${cY}px)`;
-            } else if (p.scrollTop <= 0 && moveY > 0) {
-                // 顶部下拉橡皮筋
-                cY = Math.pow(moveY, 0.85);
-                p.style.transform = `translateX(${cX}px) translateY(${cY}px)`;
-                e.preventDefault();
-            } else if (p.scrollTop + p.offsetHeight >= p.scrollHeight && moveY < 0) {
-                // 底部上拉橡皮筋
-                cY = -Math.pow(-moveY, 0.85);
-                p.style.transform = `translateX(${cX}px) translateY(${cY}px)`;
+                cX = moveX;
+                p.style.transform = `translateX(${cX}px)`;
+            } 
+            // 2. 顶部下拉橡皮筋
+            else if (p.scrollTop <= 0 && moveY > 0) {
+                cY = moveY * resistance;
+                p.style.transform = `translateY(${cY}px)`;
                 e.preventDefault();
             }
-        }, { passive: false });
+            // 3. 【新增】底部上拉橡皮筋
+            // 判定条件：滚动到底部且手指继续上滑
+            else if (p.scrollTop + p.offsetHeight >= p.scrollHeight && moveY < 0) {
+                cY = moveY * resistance;
+                p.style.transform = `translateY(${cY}px)`;
+                e.preventDefault();
+            }
+        });
 
         p.addEventListener('touchend', () => {
-            p.style.transition = 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)';
-            if (cX > 100) {
+            p.style.transition = 'transform 0.4s cubic-bezier(0.19, 1, 0.22, 1)';
+            if (cX > 120) {
                 hidP();
             } else {
+                // 自动回弹归位
                 p.style.transform = 'translateX(0) translateY(0)';
             }
             cX = 0; cY = 0;
-        }, { passive: true });
+        });
 
-        // ── 触摸移动统一阻止默认行为（页面内） ──
-        document.addEventListener('touchmove', e => {
+        document.addEventListener('touchmove', (e) => {
             if (!p.contains(e.target)) e.preventDefault();
         }, { passive: false });
-
-        // 给 tab-btn 加上 margin-bottom 适配安全区
-        document.querySelector('.tabs').style.marginBottom = 'env(safe-area-inset-bottom)';
     </script>
 </body>
 </html>
